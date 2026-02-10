@@ -1,0 +1,21 @@
+# macOS
+.DS_Store
+
+# VS Code / IDE
+.vscode/
+.idea/
+
+# Environment files (zet echte secrets nooit op GitHub)
+.env
+.env.*
+
+# Logs / temp
+*.log
+*.tmp
+
+# Dependencies (voor het geval je later Composer/NPM gebruikt)
+project/vendor/
+node_modules/
+
+# OS / tooling
+Thumbs.db

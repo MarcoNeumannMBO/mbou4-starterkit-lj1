@@ -1,0 +1,40 @@
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:80"
+    volumes:
+      # We mounten de map 'project' als webroot (document root)
+      # Daardoor wordt index.php bereikbaar op http://localhost:8080/
+      - ./project:/var/www/html
+    environment:
+      # Deze env vars gebruiken we in includes/db.php (handig voor Docker)
+      DB_HOST: db
+      DB_NAME: blogproject
+      DB_USER: bloguser
+      DB_PASS: blogpass
+    depends_on:
+      - db
+
+  db:
+    image: mysql:8.0
+    command: --default-authentication-plugin=mysql_native_password
+    restart: unless-stopped
+    ports:
+      # Optioneel: zodat je ook met een GUI tool (bijv. DBeaver) kunt verbinden vanaf je host.
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: blogproject
+      MYSQL_USER: bloguser
+      MYSQL_PASSWORD: blogpass
+    volumes:
+      # Database data blijft bewaard tussen container restarts
+      - db_data:/var/lib/mysql
+      # Init script: wordt alleen uitgevoerd bij de EERSTE start met een lege database volume
+      - ./project/database.sql:/docker-entrypoint-initdb.d/01-database.sql:ro
+
+volumes:
+  db_data:
