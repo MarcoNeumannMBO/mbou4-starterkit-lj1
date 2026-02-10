@@ -9,30 +9,30 @@
 // 4) INSERT query uitvoeren (prepared statement)
 // 5) Redirect naar de homepage (zodat je niet per ongeluk dubbel opslaat)
 
-require_once __DIR__ . '/../includes/db.php';
+require_once __DIR__ . '/../includes/db.php'; // We hebben $pdo nodig om de database te kunnen gebruiken. $baseUrl is handig voor links/redirects. 
 
 // Categories ophalen voor de dropdown
-$categoryStmt = $pdo->prepare('SELECT id, name FROM categories ORDER BY name ASC');
-$categoryStmt->execute();
-$categories = $categoryStmt->fetchAll();
+$categoryStmt = $pdo->prepare('SELECT id, name FROM categories ORDER BY name ASC'); // We gebruiken een prepared statement, ook al hebben we geen parameters, gewoon om consequent te zijn in onze code. Je kunt hier ook $pdo->query() gebruiken als je dat wilt.
+$categoryStmt->execute(); // Nu hebben we een statement met de resultaten van de query. We moeten nog de data ophalen (fetch) om er iets mee te kunnen doen. We gebruiken fetchAll() omdat we alle categorieën willen hebben voor de dropdown. Je kunt ook fetch() gebruiken in een loop als je dat wilt, maar fetchAll() is hier handiger.
+$categories = $categoryStmt->fetchAll(); // $categories is nu een array van categorieën, waarbij elke categorie een associatieve array is met 'id' en 'name' (omdat we PDO::FETCH_ASSOC hebben ingesteld in db.php).
 
 // Fouten verzamelen (handig voor studenten)
-$errors = [];
+$errors = []; // We gebruiken een array om eventuele foutmeldingen te verzamelen tijdens de validatie. Aan het einde kunnen we deze allemaal tegelijk tonen aan de gebruiker.
 
 // POST uitleg:
 // - Als je een formulier verstuurt met method="post", komen de waarden in $_POST.
 // - POST data staat NIET in de URL (handig voor grotere/gevoelige data).
 // - In HTML bepaalt het "name"-attribuut de sleutel in $_POST.
 //   Voorbeeld: <input name="title"> => $_POST['title']
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+if ($_SERVER['REQUEST_METHOD'] === 'POST') { // We controleren of het formulier is verstuurd door te kijken naar de request method. Als het een POST request is, betekent dit dat het formulier is verstuurd en kunnen we de input verwerken. Als het geen POST request is (bijv. GET), dan tonen we gewoon het lege formulier.
     // Simpele input lezen
-    $title = trim((string)($_POST['title'] ?? ''));
-    $content = trim((string)($_POST['content'] ?? ''));
-    $categoryId = (int)($_POST['category_id'] ?? 0);
+    $title = trim((string)($_POST['title'] ?? '')); // We lezen de titel uit $_POST. We gebruiken trim() om eventuele spaties aan het begin/eind te verwijderen. We casten naar string en gebruiken ?? '' om te voorkomen dat we een fout krijgen als 'title' niet is ingevuld (dan wordt het een lege string).
+    $content = trim((string)($_POST['content'] ?? '')); // Zelfde uitleg als bij $title.
+    $categoryId = (int)($_POST['category_id'] ?? 0); // We lezen de category_id uit $_POST. We casten naar int, zodat we een getal krijgen (handig voor de validatie en database). Als er geen category_id is ingevuld, wordt het 0, wat we later kunnen gebruiken om te controleren of er een categorie is gekozen.
 
     // Validatie (beginner-vriendelijk)
     if ($title === '') {
-        $errors[] = 'Titel is verplicht.';
+        $errors[] = 'Titel is verplicht.';  // We voegen een foutmelding toe aan de $errors array als de titel leeg is. We doen dit voor elke veld dat we willen valideren. Aan het einde kunnen we alle foutmeldingen tegelijk tonen aan de gebruiker.
     }
     if ($content === '') {
         $errors[] = 'Content is verplicht.';

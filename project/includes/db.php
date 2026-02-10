@@ -44,22 +44,22 @@ $dsn = "mysql:host={$dbHost};dbname={$dbName};charset={$dbCharset}";
 // 3) PDO opties
 $options = [
     // Als er iets misgaat in SQL, gooien we een exception (handig om te leren/debuggen)
-    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, // Je kunt dit in productie aanpassen naar ERRMODE_SILENT en dan zelf fouten afhandelen.
 
     // Resultaten ophalen als associatieve arrays: ['kolomnaam' => waarde]
-    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC, // Handig voor beginners, want je kunt dan makkelijk $row['title'] gebruiken in plaats van $row[0].
 
     // Zet echte prepared statements aan (MySQL driver)
-    PDO::ATTR_EMULATE_PREPARES => false,
+    PDO::ATTR_EMULATE_PREPARES => false, // Dit zorgt ervoor dat PDO echte prepared statements gebruikt, wat veiliger is tegen SQL-injection. In sommige omgevingen (zoals oudere MySQL versies) kan dit problemen geven, dus je kunt dit eventueel aanpassen als je dat nodig hebt.
 ];
 
 // 4) Maak de connectie
-try {
-    $pdo = new PDO($dsn, $dbUser, $dbPass, $options);
-} catch (PDOException $e) {
+try { // We maken een PDO object aan. Hiermee kunnen we later SQL queries uitvoeren.
+    $pdo = new PDO($dsn, $dbUser, $dbPass, $options); // $pdo is nu onze database connectie. We gebruiken deze variabele in andere bestanden (bijv. posts/index.php).
+} catch (PDOException $e) { // Als er iets misgaat bij het verbinden, vangen we de fout op en tonen we een bericht.
     // In een echte website zou je dit netter afhandelen.
     // Voor beginners is het handig om te zien wat er misgaat.
-    //
+    // Je kunt hier ook een custom error page tonen, maar zorg dan dat je de foutmelding logt (niet op de pagina zelf!).
     // Tip: als je dit ziet, klopt vaak één van deze dingen niet:
     // - DB draait niet (MySQL service uit / Docker container down)
     // - Host/username/password is fout
@@ -95,14 +95,14 @@ if ($baseUrl === '') {
     // We kijken naar bekende submappen in dit project.
     // LET OP: als de submap op positie 0 staat (bijv. "/posts/..."), dan is $baseUrl "".
     // Dat is CORRECT (app draait dan in de webroot), dus we moeten dat niet zien als "geen match".
-    $knownSubdirs = ['/posts/', '/categories/', '/includes/'];
-    $foundKnownSubdir = false;
-    foreach ($knownSubdirs as $subdir) {
-        $pos = strpos($scriptName, $subdir);
-        if ($pos !== false) {
-            $baseUrl = substr($scriptName, 0, $pos);
-            $foundKnownSubdir = true;
-            break;
+    $knownSubdirs = ['/posts/', '/categories/', '/includes/']; // Voeg hier andere submappen toe als je die hebt.
+    $foundKnownSubdir = false; // We zoeken naar de eerste bekende submap in het script pad.
+    foreach ($knownSubdirs as $subdir) { // Voorbeeld: $subdir = "/posts/"
+        $pos = strpos($scriptName, $subdir); // Voorbeeld: strpos("/project/posts/create.php", "/posts/") => 8
+        if ($pos !== false) { // We hebben een bekende submap gevonden in het script pad.
+            $baseUrl = substr($scriptName, 0, $pos); // Voorbeeld: substr("/project/posts/create.php", 0, 8) => "/project"
+            $foundKnownSubdir = true; // We hebben een match gevonden, dus we kunnen stoppen met zoeken.
+            break; // We stoppen na de eerste match, want we willen de "hoogste" submap (dichtst bij root).
         }
     }
 
@@ -110,14 +110,14 @@ if ($baseUrl === '') {
     // Voorbeeld:
     // - /project/index.php -> dirname = /project
     // - /index.php -> dirname = /
-    if ($foundKnownSubdir === false) {
-        $baseUrl = str_replace('\\', '/', (string)dirname($scriptName));
+    if ($foundKnownSubdir === false) { // Geen bekende submap gevonden, dus we baseren ons op de map van het script.
+        $baseUrl = str_replace('\\', '/', (string)dirname($scriptName)); // Voorbeeld: dirname("/project/index.php") => "/project", dirname("/index.php") => "/"
     }
 
     // Opruimen: trailing slash eraf en '/' wordt ''
-    $baseUrl = rtrim($baseUrl, '/');
-    if ($baseUrl === '/') {
-        $baseUrl = '';
+    $baseUrl = rtrim($baseUrl, '/'); // Voorbeeld: rtrim("/project/", '/') => "/project", rtrim("/", '/') => ""
+    if ($baseUrl === '/') { // Als we uiteindelijk '/' overhouden, maken we er '' van, want dat is de juiste baseUrl voor de webroot.
+        $baseUrl = ''; // Voorbeeld: '/' wordt '' (webroot), '/project' blijft '/project'
     }
 }
 
